@@ -1,16 +1,22 @@
 {% extends "Master/MenuBgTemplate.html.twig" %}
 
 {% block body %}
-    <div class="container-fluid">
-        {% for datos in fsc.datosArchivos %}
-            <div class="mb-3">
-                <div>
-                    {{ datos.fecha }}
+    <div class="container">
+        {% if fsc.datosArchivos %}
+            {% for datos in fsc.datosArchivos %}
+                <div class="card border-dark mb-3">
+                    <div class="card-header">
+                        {{ datos.fecha }}
+                    </div>
+                    <div class="card-body">
+                        {{ datos.datos.message|raw|nl2br }}
+                    </div>
                 </div>
-                <div>
-                    {{ datos.datos.message|raw|nl2br }}
-                </div>
+            {% endfor %}
+        {% else %}
+            <div class="text-white text-bg-warning rounded-5 text-center p-1">
+                {{ trans('no-data') }}
             </div>
-        {% endfor %}
+        {% endif %}
     </div>
 {% endblock %}
