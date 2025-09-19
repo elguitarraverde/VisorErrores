@@ -10,6 +10,15 @@ class VisorErrores extends Controller
 {
     public array $datosArchivos;
 
+    public function getPageData(): array
+    {
+        $data = parent::getPageData();
+        $data['menu'] = 'admin';
+        $data['title'] = 'Visor de Errores';
+        $data['icon'] = 'fa-solid fa-triangle-exclamation';
+        return $data;
+    }
+
     /**
      * @throws KernelException
      */
