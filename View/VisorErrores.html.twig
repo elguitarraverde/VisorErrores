@@ -14,7 +14,7 @@
                 </div>
             {% endfor %}
         {% else %}
-            <div class="text-white text-bg-warning rounded-5 text-center p-1">
+            <div class="{{ fsc.kernelVersion2024 ? 'bg-warning text-dark rounded' : 'text-white text-bg-warning rounded-5' }} text-center p-1">
                 {{ trans('no-data') }}
             </div>
         {% endif %}

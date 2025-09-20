@@ -3,12 +3,14 @@
 namespace FacturaScripts\Plugins\VisorErrores\Controller;
 
 use FacturaScripts\Core\Base\Controller;
+use FacturaScripts\Core\Kernel;
 use FacturaScripts\Core\KernelException;
 use FacturaScripts\Core\Tools;
 
 class VisorErrores extends Controller
 {
     public array $datosArchivos;
+    public bool $kernelVersion2024;
 
     public function getPageData(): array
     {
@@ -43,5 +45,7 @@ class VisorErrores extends Controller
         usort($this->datosArchivos, function ($a, $b) {
             return strtotime($b['fecha']) - strtotime($a['fecha']);
         });
+
+        $this->kernelVersion2024 = strpos(Kernel::version(), '2024') !== false;
     }
 }
