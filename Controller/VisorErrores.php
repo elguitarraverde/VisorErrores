@@ -38,6 +38,11 @@ class VisorErrores extends Controller
             return;
         }
 
+        if ($action === 'delete-all') {
+            $this->deleteAllErrors();
+            return;
+        }
+
         $this->datosArchivos = [];
         foreach ($pathsArchivos as $pathArchivo) {
             // obtenemos la fecha de creación del archivo
@@ -75,6 +80,34 @@ class VisorErrores extends Controller
                 }
                 break;
             }
+        }
+
+        // redirigir a la misma página
+        $this->redirect($this->url());
+    }
+
+    /**
+     * @throws KernelException
+     */
+    private function deleteAllErrors(): void
+    {
+        $pathsArchivos = glob(Tools::folder('MyFiles', 'crash*.json'));
+        $eliminados = 0;
+        $errores = 0;
+
+        foreach ($pathsArchivos as $pathArchivo) {
+            if (unlink($pathArchivo)) {
+                $eliminados++;
+            } else {
+                $errores++;
+            }
+        }
+
+        if ($eliminados > 0) {
+            Tools::log()->notice('Se eliminaron ' . $eliminados . ' errores correctamente');
+        }
+        if ($errores > 0) {
+            Tools::log()->error('No se pudieron eliminar ' . $errores . ' archivos de error');
         }
 
         // redirigir a la misma página
