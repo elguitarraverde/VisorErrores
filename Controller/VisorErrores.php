@@ -30,6 +30,14 @@ class VisorErrores extends Controller
 
         $pathsArchivos = glob(Tools::folder('MyFiles', 'crash*.json'));
 
+        // gestionar la acción de eliminar
+        $action = $this->request->get('action', '');
+        if ($action === 'delete') {
+            $hash = $this->request->get('hash', '');
+            $this->deleteError($hash);
+            return;
+        }
+
         $this->datosArchivos = [];
         foreach ($pathsArchivos as $pathArchivo) {
             // obtenemos la fecha de creación del archivo
@@ -37,6 +45,8 @@ class VisorErrores extends Controller
             $datos = json_decode(file_get_contents($pathArchivo), true);
             $this->datosArchivos[] = [
                 'fecha' => $fecha,
+                'hash' => $datos['hash'] ?? '',
+                'archivo' => basename($pathArchivo),
                 'datos' => $datos
             ];
         }
@@ -47,5 +57,27 @@ class VisorErrores extends Controller
         });
 
         $this->kernelVersion2024 = strpos(Kernel::version(), '2024') !== false;
+    }
+
+    /**
+     * @throws KernelException
+     */
+    private function deleteError(string $hash): void
+    {
+        $pathsArchivos = glob(Tools::folder('MyFiles', 'crash*.json'));
+        foreach ($pathsArchivos as $pathArchivo) {
+            $datos = json_decode(file_get_contents($pathArchivo), true);
+            if (isset($datos['hash']) && $datos['hash'] === $hash) {
+                if (unlink($pathArchivo)) {
+                    Tools::log()->notice('Error eliminado correctamente');
+                } else {
+                    Tools::log()->error('No se pudo eliminar el archivo de error');
+                }
+                break;
+            }
+        }
+
+        // redirigir a la misma página
+        $this->redirect($this->url());
     }
 }
