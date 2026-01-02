@@ -32,7 +32,24 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        {{ datos.datos.message|raw|nl2br }}
+                        <div class="mb-3">
+                            <strong>Mensaje:</strong><br>
+                            {{ datos.datos.message|raw|nl2br }}
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <strong>Archivo:</strong> {{ datos.datos.file }}
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <strong>Línea:</strong> {{ datos.datos.line }}
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <strong>URL:</strong> {{ datos.datos.url }}
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <strong>IP:</strong> {{ datos.datos.ip }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             {% endfor %}
