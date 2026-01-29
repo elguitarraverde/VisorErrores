@@ -6,57 +6,127 @@
             <h1>
                 <i class="fa-solid fa-triangle-exclamation me-1"></i> Visor de errores
             </h1>
-            {% if fsc.datosArchivos %}
-                <a href="?action=delete-all" class="btn btn-secondary position-relative"
-                   onclick="return confirm('¿Está seguro de eliminar todos los errores?');">
-                    <i class="fa-solid fa-trash-alt me-1"></i> Eliminar todos
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                        {{ fsc.datosArchivos | length }}
-                    </span>
-                </a>
-            {% endif %}
         </div>
-        {% if fsc.datosArchivos %}
-            {% for datos in fsc.datosArchivos %}
-                <div class="card shadow mb-3">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <a href="https://facturascripts.com/errores/{{ datos.hash }}" target="_blank">
-                            🚨 {{ datos.hash }}
+        <ul class="nav nav-tabs" id="ErrorsTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="crash-errors-tab" data-bs-toggle="tab" data-bs-target="#crash-errors-tab-pane" type="button" role="tab" aria-controls="crash-errors-tab-pane" aria-selected="true">Errores Críticos</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="errors-logs-tab" data-bs-toggle="tab" data-bs-target="#errors-logs-tab-pane" type="button" role="tab" aria-controls="errors-logs-tab-pane" aria-selected="false">Logs de Errores</button>
+            </li>
+        </ul>
+        <div class="tab-content mt-3" id="ErrorsTabContent">
+            <div class="tab-pane fade show active" id="crash-errors-tab-pane" role="tabpanel" aria-labelledby="crash-errors-tab" tabindex="0">
+                {% if fsc.datosArchivos %}
+                    <div class="d-flex justify-content-end align-items-center my-2">
+                        <a href="?action=delete-all" class="btn btn-secondary position-relative"
+                           onclick="return confirm('¿Está seguro de eliminar todos los errores?');">
+                            <i class="fa-solid fa-trash-alt me-1"></i> Eliminar todos
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{ fsc.datosArchivos | length }}
+                            </span>
                         </a>
-                        <div>
-                            <span class="me-3">{{ datos.fecha }}</span>
-                            <a href="?action=delete&hash={{ datos.hash }}" class="btn btn-sm btn-outline-danger"
-                               onclick="return confirm('¿Está seguro de eliminar este error?');">
-                                <i class="fa-solid fa-trash-alt"></i>
-                            </a>
-                        </div>
                     </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <strong>Mensaje:</strong><br>
-                            {{ datos.datos.message|raw|nl2br }}
+                    {% for datos in fsc.datosArchivos %}
+                        <div class="card shadow mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <a href="https://facturascripts.com/errores/{{ datos.hash }}" target="_blank">
+                                    🚨 {{ datos.hash }}
+                                </a>
+                                <div>
+                                    <span class="me-3">{{ datos.fecha }}</span>
+                                    <a href="?action=delete&hash={{ datos.hash }}" class="btn btn-sm btn-outline-danger"
+                                       onclick="return confirm('¿Está seguro de eliminar este error?');">
+                                        <i class="fa-solid fa-trash-alt"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <strong>Mensaje:</strong><br>
+                                    {{ datos.datos.message|raw|nl2br }}
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <strong>Archivo:</strong> {{ datos.datos.file }}
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <strong>Línea:</strong> {{ datos.datos.line }}
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <strong>URL:</strong> {{ datos.datos.url }}
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <strong>IP:</strong> {{ datos.datos.ip }}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-2">
-                                <strong>Archivo:</strong> {{ datos.datos.file }}
-                            </div>
-                            <div class="col-md-6 mb-2">
-                                <strong>Línea:</strong> {{ datos.datos.line }}
-                            </div>
-                            <div class="col-md-6 mb-2">
-                                <strong>URL:</strong> {{ datos.datos.url }}
-                            </div>
-                            <div class="col-md-6 mb-2">
-                                <strong>IP:</strong> {{ datos.datos.ip }}
-                            </div>
-                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-white text-bg-warning rounded-5 text-center p-1">
+                        {{ trans('no-data') }}
                     </div>
-                </div>
-            {% endfor %}
-        {% else %}
-            <div class="{{ fsc.kernelVersion2024 ? 'bg-warning text-dark rounded' : 'text-white text-bg-warning rounded-5' }} text-center p-1">
-                {{ trans('no-data') }}
+                {% endif %}
             </div>
-        {% endif %}
+            <div class="tab-pane fade" id="errors-logs-tab-pane" role="tabpanel" aria-labelledby="errors-logs-tab" tabindex="0">
+                {% if fsc.logsErrors %}
+                    <div class="d-flex justify-content-end align-items-center my-2">
+                        <a href="?action=delete-all-logs" class="btn btn-secondary position-relative"
+                           onclick="return confirm('¿Está seguro de eliminar todos los errores?');">
+                            <i class="fa-solid fa-trash-alt me-1"></i> Eliminar todos
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{ fsc.logsErrors | length }}
+                            </span>
+                        </a>
+                    </div>
+                    {% for datos in fsc.logsErrors %}
+                        <div class="card shadow mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="me-3">{{ datos.time }}</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <strong>Mensaje:</strong><br>
+                                    {{ datos.message }}
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Contexto:</strong><br>
+                                    <pre style="background: #f8f9fa; padding: 1rem; border: 1px solid #ddd;">
+                                        {{- datos.context|json_encode(constant('JSON_PRETTY_PRINT')) -}}
+                                    </pre>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <strong>Canal:</strong> {{ datos.channel }}
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <strong>Uri:</strong> {{ datos.uri }}
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <strong>IP:</strong> {{ datos.ip }}
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <strong>Usuario:</strong> {{ datos.nick }}
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <strong>Modelo:</strong> {{ datos.model }}
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <strong>Código Modelo:</strong> {{ datos.modelcode }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-white text-bg-warning rounded-5 text-center p-1">
+                        {{ trans('no-data') }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
     </div>
 {% endblock %}

@@ -5,12 +5,14 @@ namespace FacturaScripts\Plugins\VisorErrores\Controller;
 use FacturaScripts\Core\Base\Controller;
 use FacturaScripts\Core\Kernel;
 use FacturaScripts\Core\KernelException;
+use FacturaScripts\Core\Model\LogMessage;
 use FacturaScripts\Core\Tools;
+use FacturaScripts\Core\Where;
 
 class VisorErrores extends Controller
 {
     public array $datosArchivos;
-    public bool $kernelVersion2024;
+    public array $logsErrors;
 
     public function getPageData(): array
     {
@@ -28,43 +30,45 @@ class VisorErrores extends Controller
     {
         parent::privateCore($response, $user, $permissions);
 
-        $pathsArchivos = glob(Tools::folder('MyFiles', 'crash*.json'));
+        $action = $this->request->query('action', '');
 
-        // gestionar la acción de eliminar
-        $action = $this->request->get('action', '');
+        // ELIMINAR UN ERROR CRITICO
         if ($action === 'delete') {
-            $hash = $this->request->get('hash', '');
+            $hash = $this->request->query('hash', '');
             $this->deleteError($hash);
             return;
         }
 
+        // ELIMINAR TODOS LOS ERRORES CRITICOS
         if ($action === 'delete-all') {
             $this->deleteAllErrors();
             return;
         }
 
-        $this->datosArchivos = [];
-        foreach ($pathsArchivos as $pathArchivo) {
-            $datos = json_decode(file_get_contents($pathArchivo), true);
-            $this->datosArchivos[] = [
-                'fecha' => $datos['created_at'] ?? date('Y-m-d H:i:s', filemtime($pathArchivo)),
-                'hash' => $datos['hash'] ?? '',
-                'archivo' => basename($pathArchivo),
-                'datos' => $datos
-            ];
+        // ELIMINAR TODOS LOS LOGS DE ERRORES
+        if ($action === 'delete-all-logs') {
+            $deleted = LogMessage::deleteWhere([
+                Where::notEq('channel', 'audit'),
+                Where::eq('level', 'error')
+            ]);
+
+            if($deleted){
+                Tools::log()->notice('Se eliminaron todos los logs de errores correctamente');
+            }else{
+                Tools::log()->error('No se pudieron eliminar todos los logs de errores');
+            }
+
+            // redirigir a la misma página
+            $this->redirect($this->url());
+
+            return;
         }
 
-        // ordenar por fecha (más recientes primero)
-        usort($this->datosArchivos, function ($a, $b) {
-            return strtotime($b['fecha']) - strtotime($a['fecha']);
-        });
+        $this->getCriticalErrors();
 
-        $this->kernelVersion2024 = strpos(Kernel::version(), '2024') !== false;
+        $this->getLogsErrors();
     }
 
-    /**
-     * @throws KernelException
-     */
     private function deleteError(string $hash): void
     {
         $pathsArchivos = glob(Tools::folder('MyFiles', 'crash*.json'));
@@ -84,9 +88,6 @@ class VisorErrores extends Controller
         $this->redirect($this->url());
     }
 
-    /**
-     * @throws KernelException
-     */
     private function deleteAllErrors(): void
     {
         $pathsArchivos = glob(Tools::folder('MyFiles', 'crash*.json'));
@@ -110,5 +111,41 @@ class VisorErrores extends Controller
 
         // redirigir a la misma página
         $this->redirect($this->url());
+    }
+
+    private function getCriticalErrors(): void
+    {
+        $pathsArchivos = glob(Tools::folder('MyFiles', 'crash*.json'));
+
+        $this->datosArchivos = [];
+        foreach ($pathsArchivos as $pathArchivo) {
+            $datos = json_decode(file_get_contents($pathArchivo), true);
+            $this->datosArchivos[] = [
+                'fecha' => $datos['created_at'] ?? date('Y-m-d H:i:s', filemtime($pathArchivo)),
+                'hash' => $datos['hash'] ?? '',
+                'archivo' => basename($pathArchivo),
+                'datos' => $datos
+            ];
+        }
+
+        // ordenar por fecha (más recientes primero)
+        usort($this->datosArchivos, function ($a, $b) {
+            return strtotime($b['fecha']) - strtotime($a['fecha']);
+        });
+    }
+
+    private function getLogsErrors(): void
+    {
+        $this->logsErrors = LogMessage::all([Where::eq('level', 'error')]);
+
+        foreach ($this->logsErrors as $log) {
+            if (is_string($log->context)) {
+                // 1. Convertimos &quot; a "
+                $cleanJson = htmlspecialchars_decode($log->context);
+
+                // 2. Decodificamos el JSON
+                $log->context = json_decode($cleanJson, true);
+            }
+        }
     }
 }
