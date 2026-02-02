@@ -3,7 +3,6 @@
 namespace FacturaScripts\Plugins\VisorErrores\Controller;
 
 use FacturaScripts\Core\Base\Controller;
-use FacturaScripts\Core\Kernel;
 use FacturaScripts\Core\KernelException;
 use FacturaScripts\Core\Model\LogMessage;
 use FacturaScripts\Core\Tools;
@@ -42,25 +41,6 @@ class VisorErrores extends Controller
         // ELIMINAR TODOS LOS ERRORES CRITICOS
         if ($action === 'delete-all') {
             $this->deleteAllErrors();
-            return;
-        }
-
-        // ELIMINAR TODOS LOS LOGS DE ERRORES
-        if ($action === 'delete-all-logs') {
-            $deleted = LogMessage::deleteWhere([
-                Where::notEq('channel', 'audit'),
-                Where::eq('level', 'error')
-            ]);
-
-            if($deleted){
-                Tools::log()->notice('Se eliminaron todos los logs de errores correctamente');
-            }else{
-                Tools::log()->error('No se pudieron eliminar todos los logs de errores');
-            }
-
-            // redirigir a la misma página
-            $this->redirect($this->url());
-
             return;
         }
 
@@ -136,7 +116,9 @@ class VisorErrores extends Controller
 
     private function getLogsErrors(): void
     {
-        $this->logsErrors = LogMessage::all([Where::eq('level', 'error')]);
+        $this->logsErrors = LogMessage::all([
+            Where::eq('level', 'error')
+        ], ['time' => 'DESC'], 0, 50);
 
         foreach ($this->logsErrors as $log) {
             if (is_string($log->context)) {
