@@ -1,0 +1,16 @@
+{
+    "visor-errores": "Visor de errores",
+    "visor-errores-criticos": "Errores críticos",
+    "visor-errores-logs": "Logs de errores",
+    "visor-errores-eliminar-todos": "Eliminar todos",
+    "visor-errores-eliminar-todos-confirm": "¿Está seguro de eliminar todos los errores?",
+    "visor-errores-eliminar-confirm": "¿Está seguro de eliminar este error?",
+    "visor-errores-error-eliminado": "Error eliminado correctamente.",
+    "visor-errores-error-no-eliminado": "No se pudo eliminar el archivo de error.",
+    "visor-errores-errores-eliminados": "Se eliminaron %eliminados% errores correctamente.",
+    "visor-errores-errores-no-eliminados": "No se pudieron eliminar %fallidos% archivos de error.",
+    "visor-errores-ultimos-logs": "Se muestran los 50 últimos logs. Para profundizar en los logs o eliminarlos use el listado de",
+    "visor-errores-contexto": "Contexto",
+    "visor-errores-canal": "Canal",
+    "visor-errores-codigo-modelo": "Código del modelo"
+}

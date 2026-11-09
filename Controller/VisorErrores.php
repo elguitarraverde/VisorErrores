@@ -4,20 +4,20 @@ namespace FacturaScripts\Plugins\VisorErrores\Controller;
 
 use FacturaScripts\Core\Base\Controller;
 use FacturaScripts\Core\KernelException;
-use FacturaScripts\Core\Model\LogMessage;
 use FacturaScripts\Core\Tools;
-use FacturaScripts\Core\Where;
+use FacturaScripts\Plugins\VisorErrores\Lib\GestorErrores;
 
 class VisorErrores extends Controller
 {
-    public array $datosArchivos;
-    public array $logsErrors;
+    public array $datosArchivos = [];
+
+    public array $logsErrors = [];
 
     public function getPageData(): array
     {
         $data = parent::getPageData();
         $data['menu'] = 'admin';
-        $data['title'] = 'Visor de Errores';
+        $data['title'] = 'visor-errores';
         $data['icon'] = 'fa-solid fa-triangle-exclamation';
         return $data;
     }
@@ -29,105 +29,40 @@ class VisorErrores extends Controller
     {
         parent::privateCore($response, $user, $permissions);
 
-        $action = $this->request->query('action', '');
-
-        // ELIMINAR UN ERROR CRITICO
-        if ($action === 'delete') {
-            $hash = $this->request->query('hash', '');
-            $this->deleteError($hash);
+        $action = $this->request->input('action', '');
+        if (in_array($action, ['delete', 'delete-all'], true)) {
+            $this->eliminarAction($action);
+            $this->redirect($this->url());
             return;
         }
 
-        // ELIMINAR TODOS LOS ERRORES CRITICOS
-        if ($action === 'delete-all') {
-            $this->deleteAllErrors();
+        $this->datosArchivos = GestorErrores::listarCriticos();
+        $this->logsErrors = GestorErrores::listarLogs();
+    }
+
+    private function eliminarAction(string $action): void
+    {
+        if (false === $this->permissions->allowDelete) {
+            Tools::log()->warning('not-allowed-delete');
+            return;
+        }
+        if (false === $this->validateFormToken()) {
             return;
         }
 
-        $this->getCriticalErrors();
-
-        $this->getLogsErrors();
-    }
-
-    private function deleteError(string $hash): void
-    {
-        $pathsArchivos = glob(Tools::folder('MyFiles', 'crash*.json'));
-        foreach ($pathsArchivos as $pathArchivo) {
-            $datos = json_decode(file_get_contents($pathArchivo), true);
-            if (isset($datos['hash']) && $datos['hash'] === $hash) {
-                if (unlink($pathArchivo)) {
-                    Tools::log()->notice('Error eliminado correctamente');
-                } else {
-                    Tools::log()->error('No se pudo eliminar el archivo de error');
-                }
-                break;
-            }
+        if ('delete' === $action) {
+            GestorErrores::eliminar((string)$this->request->input('hash', '')) ?
+                Tools::log()->notice('visor-errores-error-eliminado') :
+                Tools::log()->error('visor-errores-error-no-eliminado');
+            return;
         }
 
-        // redirigir a la misma página
-        $this->redirect($this->url());
-    }
-
-    private function deleteAllErrors(): void
-    {
-        $pathsArchivos = glob(Tools::folder('MyFiles', 'crash*.json'));
-        $eliminados = 0;
-        $errores = 0;
-
-        foreach ($pathsArchivos as $pathArchivo) {
-            if (unlink($pathArchivo)) {
-                $eliminados++;
-            } else {
-                $errores++;
-            }
-        }
-
+        [$eliminados, $fallidos] = GestorErrores::eliminarTodos();
         if ($eliminados > 0) {
-            Tools::log()->notice('Se eliminaron ' . $eliminados . ' errores correctamente');
+            Tools::log()->notice('visor-errores-errores-eliminados', ['%eliminados%' => $eliminados]);
         }
-        if ($errores > 0) {
-            Tools::log()->error('No se pudieron eliminar ' . $errores . ' archivos de error');
-        }
-
-        // redirigir a la misma página
-        $this->redirect($this->url());
-    }
-
-    private function getCriticalErrors(): void
-    {
-        $pathsArchivos = glob(Tools::folder('MyFiles', 'crash*.json'));
-
-        $this->datosArchivos = [];
-        foreach ($pathsArchivos as $pathArchivo) {
-            $datos = json_decode(file_get_contents($pathArchivo), true);
-            $this->datosArchivos[] = [
-                'fecha' => $datos['created_at'] ?? date('Y-m-d H:i:s', filemtime($pathArchivo)),
-                'hash' => $datos['hash'] ?? '',
-                'archivo' => basename($pathArchivo),
-                'datos' => $datos
-            ];
-        }
-
-        // ordenar por fecha (más recientes primero)
-        usort($this->datosArchivos, function ($a, $b) {
-            return strtotime($b['fecha']) - strtotime($a['fecha']);
-        });
-    }
-
-    private function getLogsErrors(): void
-    {
-        $this->logsErrors = LogMessage::all([
-            Where::eq('level', 'error')
-        ], ['time' => 'DESC'], 0, 50);
-
-        foreach ($this->logsErrors as $log) {
-            if (is_string($log->context)) {
-                // 1. Convertimos &quot; a "
-                $cleanJson = htmlspecialchars_decode($log->context);
-
-                // 2. Decodificamos el JSON
-                $log->context = json_decode($cleanJson, true);
-            }
+        if ($fallidos > 0) {
+            Tools::log()->error('visor-errores-errores-no-eliminados', ['%fallidos%' => $fallidos]);
         }
     }
 }
