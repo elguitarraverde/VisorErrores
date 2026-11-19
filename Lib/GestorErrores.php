@@ -54,13 +54,14 @@ class GestorErrores
     {
         $logs = LogMessage::all([Where::eq('level', 'error')], ['time' => 'DESC'], 0, $limite);
         foreach ($logs as $log) {
-            $log->context = json_decode(htmlspecialchars_decode((string)$log->context), true);
+            $log->context = json_decode(htmlspecialchars_decode($log->context), true);
         }
         return $logs;
     }
 
     private static function archivos(): array
     {
-        return glob(Tools::folder('MyFiles', 'crash_*.json')) ?: [];
+        $archivos = glob(Tools::folder('MyFiles', 'crash_*.json'));
+        return $archivos === false ? [] : $archivos;
     }
 }

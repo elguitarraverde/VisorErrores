@@ -1,0 +1,13 @@
+# Lista negra: lo que no forma parte del plugin instalable.
+# fsmaker excluye siempre Test/, los ocultos (.git, .github, .gitignore...) y la basura de macOS/Windows.
+Doc/
+dev/
+vendor/
+node_modules/
+Releases/
+releases/
+composer.json
+composer.lock
+*.zip
+AGENTS.md
+CLAUDE.md

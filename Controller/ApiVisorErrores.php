@@ -37,7 +37,7 @@ class ApiVisorErrores extends ApiController
     private function eliminarTodos(): void
     {
         [$eliminados, $fallidos] = GestorErrores::eliminarTodos();
-        $this->response->json(['status' => $fallidos ? 'error' : 'success', 'eliminados' => $eliminados, 'fallidos' => $fallidos]);
+        $this->response->json(['status' => $fallidos > 0 ? 'error' : 'success', 'eliminados' => $eliminados, 'fallidos' => $fallidos]);
     }
 
     private function listarErrores(): void

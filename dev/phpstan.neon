@@ -1,0 +1,17 @@
+includes:
+  - ../vendor/phpstan/phpstan-strict-rules/rules.neon
+
+parameters:
+  level: 5
+  bootstrapFiles:
+    - ../../../vendor/autoload.php
+  phpVersion: 80400
+  paths:
+    - ..
+  excludePaths:
+    - ../vendor/*
+    - ../node_modules/*
+    - ../releases/*
+  scanDirectories:
+    - ../../../Core
+    - ../../../Dinamic
